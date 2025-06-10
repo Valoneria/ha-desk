@@ -116,3 +116,9 @@ Desktop.ini
 # Home Assistant
 home-assistant.log
 home-assistant_v2.db 
+
+# Build tools
+compiler.py
+create_icon.py
+version.txt
+icon.ico
