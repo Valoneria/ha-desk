@@ -11,13 +11,13 @@ def create_version_file(build_dir):
         'company_name': 'HAdesk',
         'file_description': 'HAdesk integration for Home Assistant - Integrate your Windows machine with Home Assistant',
         'internal_name': 'HAdesk',
-        'legal_copyright': f'© {datetime.datetime.now().year} HAdesk',
+        'legal_copyright': f'(c) {datetime.datetime.now().year} HAdesk',
         'original_filename': 'HAdesk.exe',
         'product_name': 'HAdesk'
     }
     
     version_file = os.path.join(build_dir, 'version.txt')
-    with open(version_file, 'w') as f:
+    with open(version_file, 'w', encoding='utf-8') as f:
         f.write(f"""
 # UTF-8
 #
@@ -69,20 +69,21 @@ def install_pyinstaller():
     """Install PyInstaller if not already installed."""
     try:
         import PyInstaller
+        print("PyInstaller is already installed.")
     except ImportError:
         print("Installing PyInstaller...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
+        print("PyInstaller installed successfully.")
 
 def compile_executable():
     """Compile the application into an executable."""
     print("Starting compilation process...")
     
-    # Ensure we're in the correct directory
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    os.chdir(script_dir)
+    # Get the root directory (where the script is located)
+    root_dir = os.path.dirname(os.path.abspath(__file__))
     
     # Create build directory
-    build_dir = os.path.join(script_dir, 'build')
+    build_dir = os.path.join(root_dir, 'build')
     os.makedirs(build_dir, exist_ok=True)
     
     # Clean up only the work and dist subdirectories
@@ -96,41 +97,56 @@ def compile_executable():
     # Create version file
     version_file = create_version_file(build_dir)
     
-    # PyInstaller command
-    cmd = [
-        "pyinstaller",
-        "--name=HAdesk",
-        "--onefile",
-        "--noconsole",  # No console window
-        "--clean",
-        "--version-file", version_file,
-        "--workpath", work_dir,
-        "--distpath", dist_dir,
-        "--specpath", build_dir,
-        "ha_desk.py"
-    ]
-    
-    # Add icon if it exists, otherwise create it
-    icon_path = os.path.join(build_dir, "icon.ico")
-    if os.path.exists(icon_path):
-        cmd.extend(["--icon", icon_path])
-    else:
-        print("Icon not found, creating it automatically...")
-        import create_icon
-        create_icon.create_icon()
-        cmd.extend(["--icon", icon_path])
-    
-    # Add data files if needed
-    cmd.extend([
-        "--add-data", "requirements.txt;.",
-    ])
-    
-    # Run PyInstaller
-    subprocess.check_call(cmd)
-    
-    print("\nCompilation completed!")
-    print(f"Executable can be found in: {os.path.join(dist_dir, 'HAdesk.exe')}")
+    try:
+        # PyInstaller command using Python module
+        cmd = [
+            sys.executable,
+            "-m",
+            "PyInstaller",
+            "--name=HAdesk",
+            "--onefile",
+            "--noconsole",  # No console window
+            "--clean",
+            "--version-file", version_file,
+            "--workpath", work_dir,
+            "--distpath", dist_dir,
+            "--specpath", build_dir,
+            os.path.join(root_dir, "ha_desk.py")  # Use full path to ha_desk.py
+        ]
+        
+        # Add icon if it exists, otherwise create it
+        icon_path = os.path.join(build_dir, "icon.ico")
+        if os.path.exists(icon_path):
+            cmd.extend(["--icon", icon_path])
+        else:
+            print("Icon not found, creating it automatically...")
+            import create_icon
+            create_icon.create_icon()
+            cmd.extend(["--icon", icon_path])
+        
+        # Add data files if needed
+        requirements_path = os.path.join(root_dir, "requirements.txt")
+        if os.path.exists(requirements_path):
+            cmd.extend([
+                "--add-data", f"{requirements_path};.",
+            ])
+        else:
+            print("Warning: requirements.txt not found in root directory")
+        
+        # Run PyInstaller
+        print("Running PyInstaller...")
+        subprocess.check_call(cmd)
+        
+        print("\nCompilation completed!")
+        print(f"Executable can be found in: {os.path.join(dist_dir, 'HAdesk.exe')}")
+        
+    except subprocess.CalledProcessError as e:
+        print(f"Error during compilation: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     install_pyinstaller()
-    compile_executable() 
+    compile_executable()
