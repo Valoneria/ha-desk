@@ -98,7 +98,7 @@ Right-click the system tray icon and select "Exit" to close the application.
 
 If you don't want to build the executable yourself, you can download the latest pre-built version:
 
-1. Go to the [Releases](https://github.com/valoneria/HAdesk/releases) page
+1. Go to the [Releases](https://github.com/Valoneria/ha-desk/releases) page
 2. Download the latest `HAdesk.exe` from the assets
 3. Create a `.env` file in the same directory (see Configuration section above)
 4. Run `HAdesk.exe`
