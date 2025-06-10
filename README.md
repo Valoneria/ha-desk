@@ -79,7 +79,7 @@ No manual configuration is needed in Home Assistant. The device and sensors will
 ### Sensor Details
 
 #### Status Sensor
-- Shows "online" when the computer is running
+- Shows "online" when the application is running
 - Shows "offline" when the application is closed
 - Updates every 30 seconds
 
