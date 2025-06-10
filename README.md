@@ -94,6 +94,21 @@ No manual configuration is needed in Home Assistant. The device and sensors will
 
 Right-click the system tray icon and select "Exit" to close the application.
 
+## Downloading the Executable
+
+If you don't want to build the executable yourself, you can download the latest pre-built version:
+
+1. Go to the [Releases](https://github.com/valoneria/HAdesk/releases) page
+2. Download the latest `HAdesk.exe` from the assets
+3. Create a `.env` file in the same directory (see Configuration section above)
+4. Run `HAdesk.exe`
+
+The pre-built executable:
+- Includes all required dependencies
+- Doesn't require Python installation
+- Can be run on any Windows 10+ system
+- Can be used to create shortcuts or run at startup
+
 ## Building the Executable
 
 To create a standalone executable of the application:
@@ -119,4 +134,5 @@ The executable will be created in the `build/dist` directory as `HAdesk.exe`. Th
 - Distributed to other computers
 
 Note: The build tools (`compiler.py` and `create_icon.py`) are available in the `build-tools` branch of this repository. This keeps the main branch clean while making the build tools easily accessible for developers. 
+
 
