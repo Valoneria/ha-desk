@@ -115,4 +115,9 @@ Desktop.ini
 
 # Home Assistant
 home-assistant.log
-home-assistant_v2.db 
+home-assistant_v2.db
+
+# Build tools (Build tools branch)
+/build/*
+!/build/.gitkeep
+!/build/version.txt
