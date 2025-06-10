@@ -109,6 +109,29 @@ The pre-built executable:
 - Can be run on any Windows 10+ system
 - Can be used to create shortcuts or run at startup
 
+## Adding to Windows Startup
+
+To make HAdesk start automatically when you log in to Windows:
+
+1. Press `Windows + R` to open the Run dialog
+2. Type `shell:startup` and press Enter
+3. Create a shortcut to `HAdesk.exe` in the opened folder:
+   - Right-click in the folder
+   - Select New → Shortcut
+   - Browse to your HAdesk.exe location
+   - Name the shortcut "HAdesk"
+
+Alternatively, you can use Task Scheduler for more control:
+1. Open Task Scheduler (search for it in the Start menu)
+2. Click "Create Basic Task"
+3. Name it "HAdesk"
+4. Set the trigger to "At log on"
+5. Set the action to "Start a program"
+6. Browse to your HAdesk.exe location
+7. Complete the wizard
+
+Note: Make sure your `.env` file is in the same directory as the executable for the startup to work properly.
+
 ## Building the Executable
 
 To create a standalone executable of the application:
