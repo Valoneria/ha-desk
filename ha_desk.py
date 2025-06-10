@@ -7,7 +7,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import time
 import os
-import sys
 from dotenv import load_dotenv
 import logging
 import paho.mqtt.client as mqtt
