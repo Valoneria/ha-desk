@@ -1,0 +1,96 @@
+# Home Assistant Desktop Monitor
+
+A Python application that runs in the system tray and provides system information to Home Assistant installations on your network.
+
+## Features
+
+- Runs as a system tray application
+- Monitors system resources (CPU, memory, disk usage)
+- Automatic Home Assistant discovery via MQTT
+- Configurable through environment variables
+
+## Installation
+
+1. Make sure you have Python 3.7+ installed (Python 3.10 recommended, will fail to install on Python 3.13)
+2. Install the required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Create a `.env` file in the project directory (see Configuration section below)
+
+## Configuration
+
+Create a `.env` file in the project directory with the following options:
+
+```env
+# MQTT Configuration
+MQTT_BROKER=your-mqtt-broker
+MQTT_PORT=1883
+MQTT_USERNAME=your-username
+MQTT_PASSWORD=your-password
+DEVICE_NAME=Your Computer Name
+DEVICE_ID=optional-unique-id
+
+# Logging
+LOG_LEVEL=INFO
+```
+
+### Configuration Options
+
+- `MQTT_BROKER`: Your MQTT broker address (default: localhost)
+- `MQTT_PORT`: MQTT broker port (default: 1883)
+- `MQTT_USERNAME`: MQTT username (optional)
+- `MQTT_PASSWORD`: MQTT password (optional)
+- `DEVICE_NAME`: Name of your computer (default: hostname)
+- `DEVICE_ID`: Unique identifier for the device (default: auto-generated UUID)
+- `LOG_LEVEL`: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+
+## Usage
+
+1. Run the application:
+   ```bash
+   python ha_desk.py
+   ```
+2. The application will start and appear in your system tray
+3. The device will automatically appear in Home Assistant if MQTT is configured
+
+## Home Assistant Integration
+
+The application uses MQTT discovery to automatically integrate with Home Assistant. Once running, it will create:
+
+1. A device entry in Home Assistant with your computer's name
+2. Two sensors:
+   - Status sensor: Shows if your computer is online/offline
+   - System Info sensor: Shows CPU usage percentage as the main value, with memory usage, disk usage, and uptime attached as additional attributes
+
+### Prerequisites
+
+1. MQTT broker must be configured in Home Assistant
+2. MQTT integration must be enabled in Home Assistant
+3. The MQTT broker must be accessible from your computer
+
+### Automatic Discovery
+
+No manual configuration is needed in Home Assistant. The device and sensors will appear automatically in:
+- Home Assistant's device list
+- The MQTT integration page
+- Your dashboard (you can add the sensors to your dashboard)
+
+### Sensor Details
+
+#### Status Sensor
+- Shows "online" when the computer is running
+- Shows "offline" when the application is closed
+- Updates every 30 seconds
+
+#### System Info Sensor
+- CPU usage
+- Memory usage percentage
+- Disk usage (total, used, free, percentage)
+- System uptime
+- Updates every 30 seconds
+
+## Exiting the Application
+
+Right-click the system tray icon and select "Exit" to close the application. 
+
