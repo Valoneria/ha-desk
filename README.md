@@ -92,5 +92,31 @@ No manual configuration is needed in Home Assistant. The device and sensors will
 
 ## Exiting the Application
 
-Right-click the system tray icon and select "Exit" to close the application. 
+Right-click the system tray icon and select "Exit" to close the application.
+
+## Building the Executable
+
+To create a standalone executable of the application:
+
+1. Switch to the build-tools branch:
+   ```bash
+   git checkout build-tools
+   ```
+
+2. Build the executable:
+   ```bash
+   python compiler.py
+   ```
+
+The build process will:
+- Automatically create the application icon if it doesn't exist
+- Generate version information
+- Create a standalone executable
+
+The executable will be created in the `build/dist` directory as `HAdesk.exe`. This executable can be:
+- Run directly without Python installed
+- Used to create shortcuts
+- Distributed to other computers
+
+Note: The build tools (`compiler.py` and `create_icon.py`) are available in the `build-tools` branch of this repository. This keeps the main branch clean while making the build tools easily accessible for developers. 
 

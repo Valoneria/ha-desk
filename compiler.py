@@ -4,7 +4,7 @@ import sys
 import shutil
 import datetime
 
-def create_version_file():
+def create_version_file(build_dir):
     """Create a version file for the executable."""
     version_info = {
         'version': '1.0.0',
@@ -16,7 +16,7 @@ def create_version_file():
         'product_name': 'HAdesk'
     }
     
-    version_file = 'version.txt'
+    version_file = os.path.join(build_dir, 'version.txt')
     with open(version_file, 'w') as f:
         f.write(f"""
 # UTF-8
@@ -81,14 +81,20 @@ def compile_executable():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(script_dir)
     
-    # Clean up previous builds
-    if os.path.exists("build"):
-        shutil.rmtree("build")
-    if os.path.exists("dist"):
-        shutil.rmtree("dist")
+    # Create build directory
+    build_dir = os.path.join(script_dir, 'build')
+    os.makedirs(build_dir, exist_ok=True)
+    
+    # Clean up only the work and dist subdirectories
+    work_dir = os.path.join(build_dir, "work")
+    dist_dir = os.path.join(build_dir, "dist")
+    if os.path.exists(work_dir):
+        shutil.rmtree(work_dir)
+    if os.path.exists(dist_dir):
+        shutil.rmtree(dist_dir)
     
     # Create version file
-    version_file = create_version_file()
+    version_file = create_version_file(build_dir)
     
     # PyInstaller command
     cmd = [
@@ -98,17 +104,20 @@ def compile_executable():
         "--noconsole",  # No console window
         "--clean",
         "--version-file", version_file,
+        "--workpath", work_dir,
+        "--distpath", dist_dir,
+        "--specpath", build_dir,
         "ha_desk.py"
     ]
     
     # Add icon if it exists, otherwise create it
-    icon_path = os.path.join(script_dir, "icon.ico")
+    icon_path = os.path.join(build_dir, "icon.ico")
     if os.path.exists(icon_path):
         cmd.extend(["--icon", icon_path])
     else:
+        print("Icon not found, creating it automatically...")
         import create_icon
         create_icon.create_icon()
-        icon_path = os.path.join(script_dir, "icon.ico")
         cmd.extend(["--icon", icon_path])
     
     # Add data files if needed
@@ -119,11 +128,8 @@ def compile_executable():
     # Run PyInstaller
     subprocess.check_call(cmd)
     
-    # Clean up version file
-    os.remove(version_file)
-    
     print("\nCompilation completed!")
-    print("Executable can be found in the 'dist' folder.")
+    print(f"Executable can be found in: {os.path.join(dist_dir, 'HAdesk.exe')}")
 
 if __name__ == "__main__":
     install_pyinstaller()
