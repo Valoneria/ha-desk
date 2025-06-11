@@ -40,7 +40,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          dist/HAdesk.exe
+          build/dist/HAdesk.exe
         draft: false
         prerelease: false
       env:
