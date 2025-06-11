@@ -72,6 +72,7 @@ def publish_discovery_config():
         "name": f"{DEVICE_NAME} Status",
         "unique_id": f"{DEVICE_ID}_status",
         "state_topic": f"{base_topic}/status",
+        "device_class": "binary_sensor",
         "device": {
             "identifiers": [DEVICE_ID],
             "name": DEVICE_NAME,
@@ -86,7 +87,7 @@ def publish_discovery_config():
         "unique_id": f"{DEVICE_ID}_cpu",
         "state_topic": f"{base_topic}/cpu",
         "unit_of_measurement": "%",
-        "device_class": "power",
+        "device_class": "sensor",
         "device": {
             "identifiers": [DEVICE_ID],
             "name": DEVICE_NAME,
@@ -101,7 +102,7 @@ def publish_discovery_config():
         "unique_id": f"{DEVICE_ID}_memory",
         "state_topic": f"{base_topic}/memory",
         "unit_of_measurement": "%",
-        "device_class": "power",
+        "device_class": "sensor",
         "device": {
             "identifiers": [DEVICE_ID],
             "name": DEVICE_NAME,
@@ -115,6 +116,7 @@ def publish_discovery_config():
         "name": f"{DEVICE_NAME} Disk Usage",
         "unique_id": f"{DEVICE_ID}_disk",
         "state_topic": f"{base_topic}/disk",
+        "device_class": "sensor",
         "device": {
             "identifiers": [DEVICE_ID],
             "name": DEVICE_NAME,
@@ -128,6 +130,7 @@ def publish_discovery_config():
         "name": f"{DEVICE_NAME} Uptime (Seconds)",
         "unique_id": f"{DEVICE_ID}_uptime",
         "state_topic": f"{base_topic}/uptime",
+        "device_class": "sensor",
         "device": {
             "identifiers": [DEVICE_ID],
             "name": DEVICE_NAME,
@@ -141,6 +144,7 @@ def publish_discovery_config():
         "name": f"{DEVICE_NAME} Uptime (Formatted)",
         "unique_id": f"{DEVICE_ID}_uptime_formatted",
         "state_topic": f"{base_topic}/uptime_formatted",
+        "device_class": "sensor",
         "device": {
             "identifiers": [DEVICE_ID],
             "name": DEVICE_NAME,
