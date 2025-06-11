@@ -66,13 +66,16 @@ def on_connect(client, userdata, flags, rc):
 def publish_discovery_config():
     """Publish Home Assistant discovery configuration"""
     base_topic = f"homeassistant/sensor/{DEVICE_ID}"
+    binary_base_topic = f"homeassistant/binary_sensor/{DEVICE_ID}"
     
-    # Status sensor configuration
+    # Status sensor configuration (as binary_sensor)
     status_config = {
         "name": f"{DEVICE_NAME} Status",
         "unique_id": f"{DEVICE_ID}_status",
-        "state_topic": f"{base_topic}/status",
-        "device_class": "binary_sensor",
+        "state_topic": f"{binary_base_topic}/status",
+        "device_class": "connectivity",
+        "payload_on": "online",
+        "payload_off": "offline",
         "device": {
             "identifiers": [DEVICE_ID],
             "name": DEVICE_NAME,
@@ -87,7 +90,7 @@ def publish_discovery_config():
         "unique_id": f"{DEVICE_ID}_cpu",
         "state_topic": f"{base_topic}/cpu",
         "unit_of_measurement": "%",
-        "device_class": "sensor",
+        "device_class": "power",
         "device": {
             "identifiers": [DEVICE_ID],
             "name": DEVICE_NAME,
@@ -102,7 +105,7 @@ def publish_discovery_config():
         "unique_id": f"{DEVICE_ID}_memory",
         "state_topic": f"{base_topic}/memory",
         "unit_of_measurement": "%",
-        "device_class": "sensor",
+        "device_class": "power",
         "device": {
             "identifiers": [DEVICE_ID],
             "name": DEVICE_NAME,
@@ -116,7 +119,6 @@ def publish_discovery_config():
         "name": f"{DEVICE_NAME} Disk Usage",
         "unique_id": f"{DEVICE_ID}_disk",
         "state_topic": f"{base_topic}/disk",
-        "device_class": "sensor",
         "device": {
             "identifiers": [DEVICE_ID],
             "name": DEVICE_NAME,
@@ -130,7 +132,6 @@ def publish_discovery_config():
         "name": f"{DEVICE_NAME} Uptime (Seconds)",
         "unique_id": f"{DEVICE_ID}_uptime",
         "state_topic": f"{base_topic}/uptime",
-        "device_class": "sensor",
         "device": {
             "identifiers": [DEVICE_ID],
             "name": DEVICE_NAME,
@@ -144,7 +145,6 @@ def publish_discovery_config():
         "name": f"{DEVICE_NAME} Uptime (Formatted)",
         "unique_id": f"{DEVICE_ID}_uptime_formatted",
         "state_topic": f"{base_topic}/uptime_formatted",
-        "device_class": "sensor",
         "device": {
             "identifiers": [DEVICE_ID],
             "name": DEVICE_NAME,
@@ -154,7 +154,7 @@ def publish_discovery_config():
     }
     
     # Publish configurations
-    mqtt_client.publish(f"{base_topic}/status/config", json.dumps(status_config), retain=True)
+    mqtt_client.publish(f"{binary_base_topic}/status/config", json.dumps(status_config), retain=True)
     mqtt_client.publish(f"{base_topic}/cpu/config", json.dumps(cpu_config), retain=True)
     mqtt_client.publish(f"{base_topic}/memory/config", json.dumps(mem_config), retain=True)
     mqtt_client.publish(f"{base_topic}/disk/config", json.dumps(disk_config), retain=True)
@@ -168,10 +168,11 @@ def publish_system_info():
         return
         
     base_topic = f"homeassistant/sensor/{DEVICE_ID}"
+    binary_base_topic = f"homeassistant/binary_sensor/{DEVICE_ID}"
     system_info = get_system_info()
     
-    # Publish status
-    mqtt_client.publish(f"{base_topic}/status", "online")
+    # Publish status with retain=True
+    mqtt_client.publish(f"{binary_base_topic}/status", "online", retain=True)
     
     # Publish each metric individually
     mqtt_client.publish(f"{base_topic}/cpu", str(system_info["cpu_percent"]))
@@ -196,7 +197,7 @@ def get_system_info():
     data = {
         "cpu_percent": psutil.cpu_percent(),
         "memory_percent": psutil.virtual_memory().percent,
-        "uptime": time.time() - psutil.boot_time()
+        "uptime": round(time.time() - psutil.boot_time(), 2)
     }
 
     disk_usage = psutil.disk_usage('/');
@@ -256,7 +257,7 @@ def on_exit(icon):
     server_running = False
     logger.info("Shutting down application")
     if mqtt_client.is_connected():
-        mqtt_client.publish(f"homeassistant/sensor/{DEVICE_ID}/status", "offline", retain=True)
+        mqtt_client.publish(f"homeassistant/binary_sensor/{DEVICE_ID}/status", "offline", retain=True)
         mqtt_client.disconnect()
     icon.stop()
     os._exit(0)
