@@ -15,10 +15,11 @@ jobs:
         fetch-depth: 0
         ref: main  # First checkout main branch
     
-    - name: Checkout build branch
+    - name: Checkout build files
       run: |
         git fetch origin build-tools
         git checkout FETCH_HEAD -- compiler.py
+        git checkout FETCH_HEAD -- create_icon.py
     
     - name: Set up Python
       uses: actions/setup-python@v5
