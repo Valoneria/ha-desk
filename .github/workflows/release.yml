@@ -18,7 +18,7 @@ jobs:
     - name: Checkout build branch
       run: |
         git fetch origin build-tools
-        git checkout build-tools -- compiler.py
+        git checkout FETCH_HEAD -- compiler.py
     
     - name: Set up Python
       uses: actions/setup-python@v5
