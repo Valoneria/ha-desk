@@ -13,6 +13,8 @@ import paho.mqtt.client as mqtt
 import socket
 import json
 import uuid
+from collections import deque
+from statistics import mean
 
 # Load environment variables
 load_dotenv()
@@ -50,6 +52,16 @@ MQTT_PASSWORD = os.getenv('MQTT_PASSWORD', '')
 DEVICE_NAME = os.getenv('DEVICE_NAME', socket.gethostname())
 DEVICE_ID = os.getenv('DEVICE_ID', str(uuid.uuid4()))
 
+# Data collection settings
+COLLECTION_INTERVAL = 1  # Collect data every second
+PUBLISH_INTERVAL = 30    # Publish every 30 seconds
+MAX_SAMPLES = PUBLISH_INTERVAL // COLLECTION_INTERVAL
+
+# Data collection queues
+cpu_samples = deque(maxlen=MAX_SAMPLES)
+memory_samples = deque(maxlen=MAX_SAMPLES)
+disk_samples = deque(maxlen=MAX_SAMPLES)
+
 # MQTT Client setup
 mqtt_client = mqtt.Client()
 if MQTT_USERNAME and MQTT_PASSWORD:
@@ -84,13 +96,14 @@ def publish_discovery_config():
         }
     }
     
-    # CPU sensor
+    # CPU sensors
     cpu_config = {
         "name": f"{DEVICE_NAME} CPU Usage",
         "unique_id": f"{DEVICE_ID}_cpu",
         "state_topic": f"{base_topic}/cpu",
         "unit_of_measurement": "%",
         "device_class": "power",
+        "state_class": "measurement",
         "device": {
             "identifiers": [DEVICE_ID],
             "name": DEVICE_NAME,
@@ -99,13 +112,59 @@ def publish_discovery_config():
         }
     }
     
-    # Memory sensor
+    cpu_min_config = {
+        "name": f"{DEVICE_NAME} CPU Usage (Min)",
+        "unique_id": f"{DEVICE_ID}_cpu_min",
+        "state_topic": f"{base_topic}/cpu_min",
+        "unit_of_measurement": "%",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+            "identifiers": [DEVICE_ID],
+            "name": DEVICE_NAME,
+            "model": "Computer Activity Monitor",
+            "manufacturer": "Custom"
+        }
+    }
+    
+    cpu_max_config = {
+        "name": f"{DEVICE_NAME} CPU Usage (Max)",
+        "unique_id": f"{DEVICE_ID}_cpu_max",
+        "state_topic": f"{base_topic}/cpu_max",
+        "unit_of_measurement": "%",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+            "identifiers": [DEVICE_ID],
+            "name": DEVICE_NAME,
+            "model": "Computer Activity Monitor",
+            "manufacturer": "Custom"
+        }
+    }
+    
+    cpu_avg_config = {
+        "name": f"{DEVICE_NAME} CPU Usage (Avg)",
+        "unique_id": f"{DEVICE_ID}_cpu_avg",
+        "state_topic": f"{base_topic}/cpu_avg",
+        "unit_of_measurement": "%",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+            "identifiers": [DEVICE_ID],
+            "name": DEVICE_NAME,
+            "model": "Computer Activity Monitor",
+            "manufacturer": "Custom"
+        }
+    }
+    
+    # Memory sensors
     mem_config = {
         "name": f"{DEVICE_NAME} Memory (RAM) Usage",
         "unique_id": f"{DEVICE_ID}_memory",
         "state_topic": f"{base_topic}/memory",
         "unit_of_measurement": "%",
         "device_class": "power",
+        "state_class": "measurement",
         "device": {
             "identifiers": [DEVICE_ID],
             "name": DEVICE_NAME,
@@ -114,11 +173,59 @@ def publish_discovery_config():
         }
     }
     
-    # Disk sensor
+    mem_min_config = {
+        "name": f"{DEVICE_NAME} Memory Usage (Min)",
+        "unique_id": f"{DEVICE_ID}_memory_min",
+        "state_topic": f"{base_topic}/memory_min",
+        "unit_of_measurement": "%",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+            "identifiers": [DEVICE_ID],
+            "name": DEVICE_NAME,
+            "model": "Computer Activity Monitor",
+            "manufacturer": "Custom"
+        }
+    }
+    
+    mem_max_config = {
+        "name": f"{DEVICE_NAME} Memory Usage (Max)",
+        "unique_id": f"{DEVICE_ID}_memory_max",
+        "state_topic": f"{base_topic}/memory_max",
+        "unit_of_measurement": "%",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+            "identifiers": [DEVICE_ID],
+            "name": DEVICE_NAME,
+            "model": "Computer Activity Monitor",
+            "manufacturer": "Custom"
+        }
+    }
+    
+    mem_avg_config = {
+        "name": f"{DEVICE_NAME} Memory Usage (Avg)",
+        "unique_id": f"{DEVICE_ID}_memory_avg",
+        "state_topic": f"{base_topic}/memory_avg",
+        "unit_of_measurement": "%",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+            "identifiers": [DEVICE_ID],
+            "name": DEVICE_NAME,
+            "model": "Computer Activity Monitor",
+            "manufacturer": "Custom"
+        }
+    }
+    
+    # Disk sensors
     disk_config = {
         "name": f"{DEVICE_NAME} Disk Usage",
         "unique_id": f"{DEVICE_ID}_disk",
         "state_topic": f"{base_topic}/disk",
+        "unit_of_measurement": "%",
+        "device_class": "power",
+        "state_class": "measurement",
         "device": {
             "identifiers": [DEVICE_ID],
             "name": DEVICE_NAME,
@@ -127,7 +234,52 @@ def publish_discovery_config():
         }
     }
     
-    # Uptime sensor
+    disk_min_config = {
+        "name": f"{DEVICE_NAME} Disk Usage (Min)",
+        "unique_id": f"{DEVICE_ID}_disk_min",
+        "state_topic": f"{base_topic}/disk_min",
+        "unit_of_measurement": "%",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+            "identifiers": [DEVICE_ID],
+            "name": DEVICE_NAME,
+            "model": "Computer Activity Monitor",
+            "manufacturer": "Custom"
+        }
+    }
+    
+    disk_max_config = {
+        "name": f"{DEVICE_NAME} Disk Usage (Max)",
+        "unique_id": f"{DEVICE_ID}_disk_max",
+        "state_topic": f"{base_topic}/disk_max",
+        "unit_of_measurement": "%",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+            "identifiers": [DEVICE_ID],
+            "name": DEVICE_NAME,
+            "model": "Computer Activity Monitor",
+            "manufacturer": "Custom"
+        }
+    }
+    
+    disk_avg_config = {
+        "name": f"{DEVICE_NAME} Disk Usage (Avg)",
+        "unique_id": f"{DEVICE_ID}_disk_avg",
+        "state_topic": f"{base_topic}/disk_avg",
+        "unit_of_measurement": "%",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+            "identifiers": [DEVICE_ID],
+            "name": DEVICE_NAME,
+            "model": "Computer Activity Monitor",
+            "manufacturer": "Custom"
+        }
+    }
+    
+    # Uptime sensors
     uptime_config = {
         "name": f"{DEVICE_NAME} Uptime (Seconds)",
         "unique_id": f"{DEVICE_ID}_uptime",
@@ -140,7 +292,6 @@ def publish_discovery_config():
         }
     }
     
-    # Formatted Uptime sensor
     formatted_uptime_config = {
         "name": f"{DEVICE_NAME} Uptime (Formatted)",
         "unique_id": f"{DEVICE_ID}_uptime_formatted",
@@ -155,12 +306,46 @@ def publish_discovery_config():
     
     # Publish configurations
     mqtt_client.publish(f"{binary_base_topic}/status/config", json.dumps(status_config), retain=True)
+    
+    # CPU sensors
     mqtt_client.publish(f"{base_topic}/cpu/config", json.dumps(cpu_config), retain=True)
+    mqtt_client.publish(f"{base_topic}/cpu_min/config", json.dumps(cpu_min_config), retain=True)
+    mqtt_client.publish(f"{base_topic}/cpu_max/config", json.dumps(cpu_max_config), retain=True)
+    mqtt_client.publish(f"{base_topic}/cpu_avg/config", json.dumps(cpu_avg_config), retain=True)
+    
+    # Memory sensors
     mqtt_client.publish(f"{base_topic}/memory/config", json.dumps(mem_config), retain=True)
+    mqtt_client.publish(f"{base_topic}/memory_min/config", json.dumps(mem_min_config), retain=True)
+    mqtt_client.publish(f"{base_topic}/memory_max/config", json.dumps(mem_max_config), retain=True)
+    mqtt_client.publish(f"{base_topic}/memory_avg/config", json.dumps(mem_avg_config), retain=True)
+    
+    # Disk sensors
     mqtt_client.publish(f"{base_topic}/disk/config", json.dumps(disk_config), retain=True)
+    mqtt_client.publish(f"{base_topic}/disk_min/config", json.dumps(disk_min_config), retain=True)
+    mqtt_client.publish(f"{base_topic}/disk_max/config", json.dumps(disk_max_config), retain=True)
+    mqtt_client.publish(f"{base_topic}/disk_avg/config", json.dumps(disk_avg_config), retain=True)
+    
+    # Uptime sensors
     mqtt_client.publish(f"{base_topic}/uptime/config", json.dumps(uptime_config), retain=True)
     mqtt_client.publish(f"{base_topic}/uptime_formatted/config", json.dumps(formatted_uptime_config), retain=True)
 
+def get_system_info():
+    """Get current system information"""
+    disk_usage = psutil.disk_usage('/')
+    return {
+        "cpu_percent": psutil.cpu_percent(),
+        "memory_percent": psutil.virtual_memory().percent,
+        "disk_usage": disk_usage,
+        "uptime": round(time.time() - psutil.boot_time(), 2)
+    }
+
+def collect_metrics():
+    """Collect system metrics"""
+    system_info = get_system_info()
+    cpu_samples.append(system_info["cpu_percent"])
+    memory_samples.append(system_info["memory_percent"])
+    disk_samples.append(system_info["disk_usage"].percent)
+    return system_info
 
 def publish_system_info():
     """Publish system information to MQTT"""
@@ -174,13 +359,50 @@ def publish_system_info():
     # Publish status with retain=True
     mqtt_client.publish(f"{binary_base_topic}/status", "online", retain=True)
     
-    # Publish each metric individually
-    mqtt_client.publish(f"{base_topic}/cpu", str(system_info["cpu_percent"]))
-    mqtt_client.publish(f"{base_topic}/memory", str(system_info["memory_percent"]))
-    mqtt_client.publish(f"{base_topic}/disk", str(system_info["disk_usage"]["percent"]))
+    # Calculate statistics for the period
+    cpu_stats = {
+        "current": system_info["cpu_percent"],
+        "min": min(cpu_samples),
+        "max": max(cpu_samples),
+        "avg": round(mean(cpu_samples), 2)
+    }
+    
+    memory_stats = {
+        "current": system_info["memory_percent"],
+        "min": min(memory_samples),
+        "max": max(memory_samples),
+        "avg": round(mean(memory_samples), 2)
+    }
+    
+    disk_stats = {
+        "current": system_info["disk_usage"].percent,
+        "min": min(disk_samples),
+        "max": max(disk_samples),
+        "avg": round(mean(disk_samples), 2)
+    }
+    
+    # Publish current values
+    mqtt_client.publish(f"{base_topic}/cpu", str(cpu_stats["current"]))
+    mqtt_client.publish(f"{base_topic}/memory", str(memory_stats["current"]))
+    mqtt_client.publish(f"{base_topic}/disk", str(disk_stats["current"]))
+    
+    # Publish CPU statistics
+    mqtt_client.publish(f"{base_topic}/cpu_min", str(cpu_stats["min"]))
+    mqtt_client.publish(f"{base_topic}/cpu_max", str(cpu_stats["max"]))
+    mqtt_client.publish(f"{base_topic}/cpu_avg", str(cpu_stats["avg"]))
+    
+    # Publish Memory statistics
+    mqtt_client.publish(f"{base_topic}/memory_min", str(memory_stats["min"]))
+    mqtt_client.publish(f"{base_topic}/memory_max", str(memory_stats["max"]))
+    mqtt_client.publish(f"{base_topic}/memory_avg", str(memory_stats["avg"]))
+    
+    # Publish Disk statistics
+    mqtt_client.publish(f"{base_topic}/disk_min", str(disk_stats["min"]))
+    mqtt_client.publish(f"{base_topic}/disk_max", str(disk_stats["max"]))
+    mqtt_client.publish(f"{base_topic}/disk_avg", str(disk_stats["avg"]))
+    
+    # Publish uptime values
     mqtt_client.publish(f"{base_topic}/uptime", str(system_info["uptime"]))
-
-    # Publish formatted uptime (HH:MM:SS)
     formatted_uptime = time.strftime("%H:%M:%S", time.gmtime(system_info["uptime"]))
     mqtt_client.publish(f"{base_topic}/uptime_formatted", formatted_uptime)
 
@@ -191,40 +413,6 @@ def create_tray_icon():
     dc = ImageDraw.Draw(image)
     dc.ellipse([8, 8, icon_size-8, icon_size-8], fill='white')
     return image
-
-def get_system_info():
-    """Get basic system information"""
-    data = {
-        "cpu_percent": psutil.cpu_percent(),
-        "memory_percent": psutil.virtual_memory().percent,
-        "uptime": round(time.time() - psutil.boot_time(), 2)
-    }
-
-    disk_usage = psutil.disk_usage('/');
-
-    data["disk_usage"] = {
-        "total": disk_usage.total,
-        "used": disk_usage.used,
-        "free": disk_usage.free,
-        "percent": disk_usage.percent
-    }
-
-    # Figure out if the disk usage is in MB, GB, or TB
-    if disk_usage.total > 1024 * 1024 * 1024:
-        denominator = "GB"
-    elif disk_usage.total > 1024 * 1024:
-        denominator = "MB"
-    else:
-        denominator = "B"
-
-    data["disk_usage"]["total"] = f"{disk_usage.total / (1024 * 1024 * 1024):.2f} {denominator}"
-    data["disk_usage"]["used"] = f"{disk_usage.used / (1024 * 1024 * 1024):.2f} {denominator}"
-    data["disk_usage"]["free"] = f"{disk_usage.free / (1024 * 1024 * 1024):.2f} {denominator}"
-    data["disk_usage"]["percent"] = f"{disk_usage.percent:.2f}%"
-
-    return data
-
-
 
 @app.get("/")
 async def root():
@@ -269,10 +457,21 @@ def mqtt_publish_loop():
             if not mqtt_client.is_connected():
                 mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
                 mqtt_client.loop_start()
-            publish_system_info()
+            
+            # Collect metrics every second
+            for _ in range(PUBLISH_INTERVAL):
+                if not server_running:
+                    break
+                collect_metrics()
+                time.sleep(COLLECTION_INTERVAL)
+            
+            # Publish aggregated data every 30 seconds
+            if server_running:
+                publish_system_info()
+                
         except Exception as e:
             logger.error(f"Error in MQTT publish loop: {e}")
-        time.sleep(30)  # Update every 30 seconds
+            time.sleep(5)  # Wait a bit before retrying
 
 def main():
     logger.info("Starting Home Assistant Desktop Monitor")
