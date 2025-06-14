@@ -95,6 +95,13 @@ sensor_config = SensorConfig(DEVICE_NAME, DEVICE_ID)
 
 def on_connect(client, userdata, flags, rc):
     """Callback for when the client connects to the MQTT broker"""
+    # rc is the return code
+    # 0 is success
+    # 1 is protocol error
+    # 2 is invalid client id
+    # 3 is broker unavailable
+    # 4 is bad username or password
+    # 5 is not authorized
     if rc == 0:
         logger.info("Connected to MQTT broker")
         sensor_config.publish_configs(mqtt_client)
