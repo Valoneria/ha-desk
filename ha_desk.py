@@ -80,9 +80,22 @@ DEVICE_ID = os.getenv('DEVICE_ID', str(uuid.uuid4()))
 COLLECTION_INTERVAL = 1  # Collect data every second
 PUBLISH_INTERVAL = 30    # Publish every 30 seconds
 
-if(os.getenv('DEV_MODE', 'false') == 'true'):
+# Check DEV_MODE and update logging level if needed
+if os.getenv('DEV_MODE', 'false').lower() == 'true':
+    logger.info("DEV_MODE is true, updating logging level to DEBUG")
+    os.environ['LOG_LEVEL'] = 'DEBUG'
+    # Update the root logger's level
+    logging.getLogger().setLevel(logging.DEBUG)
+    # Update the file handler's level
+    file_handler.setLevel(logging.DEBUG)
+    # Update the console handler's level
+    console_handler.setLevel(logging.DEBUG)
     #Dev interval
     PUBLISH_INTERVAL = 3
+    logger.info(f"Updated LOG_LEVEL to: {os.getenv('LOG_LEVEL')}")
+else:
+    logger.info("DEV_MODE is false, keeping default logging level")
+
 
 # Initialize components
 mqtt_client = mqtt.Client()
