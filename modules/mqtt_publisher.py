@@ -31,6 +31,27 @@ class MQTTPublisher:
                 metric_data = statistics[metric_key]
                 metric_base = metric_name.lower().replace(' ', '_').replace('(', '').replace(')', '')
                 
+                # Publish configuration
+                config = {
+                    "name": metric_name,
+                    "unique_id": f"{self.device_id}_{metric_base}",
+                    "state_topic": f"{self.base_topic}/{metric_base}",
+                    "unit_of_measurement": "%",
+                    "device_class": "power",
+                    "state_class": "measurement",
+                    "device": {
+                        "identifiers": [self.device_id],
+                        "name": "Computer Activity Monitor",
+                        "model": "Computer Activity Monitor",
+                        "manufacturer": "Custom"
+                    }
+                }
+                self.mqtt_client.publish(
+                    f"{self.base_topic}/{metric_base}/config",
+                    json.dumps(config),
+                    retain=True
+                )
+                
                 # Publish current value
                 self.mqtt_client.publish(
                     f"{self.base_topic}/{metric_base}",
