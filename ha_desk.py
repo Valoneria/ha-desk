@@ -76,6 +76,9 @@ MQTT_PASSWORD = os.getenv('MQTT_PASSWORD', '')
 DEVICE_NAME = os.getenv('DEVICE_NAME', socket.gethostname())
 DEVICE_ID = os.getenv('DEVICE_ID', str(uuid.uuid4()))
 
+# Sensor cleanup configuration
+CLEANUP_SENSORS_ON_START = os.getenv('CLEANUP_SENSORS_ON_START', 'true').lower() == 'true'
+
 # Data collection settings
 COLLECTION_INTERVAL = 1  # Collect data every second
 PUBLISH_INTERVAL = 30    # Publish every 30 seconds
@@ -102,6 +105,10 @@ mqtt_client = mqtt.Client()
 if MQTT_USERNAME and MQTT_PASSWORD:
     mqtt_client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
 
+# Set up last will and testament for proper offline detection
+lwt_topic = f"homeassistant/binary_sensor/{DEVICE_ID}/availability"
+mqtt_client.will_set(lwt_topic, "offline", retain=True)
+
 data_collector = DataCollector(COLLECTION_INTERVAL, PUBLISH_INTERVAL)
 mqtt_publisher = MQTTPublisher(mqtt_client, DEVICE_ID)
 sensor_config = SensorConfig(DEVICE_NAME, DEVICE_ID)
@@ -117,9 +124,26 @@ def on_connect(client, userdata, flags, rc):
     # 5 is not authorized
     if rc == 0:
         logger.info("Connected to MQTT broker")
+        
+        # Clean up old sensors if enabled
+        if CLEANUP_SENSORS_ON_START:
+            logger.info("Cleaning up old sensors before publishing new configurations...")
+            sensor_config.cleanup_old_sensors(mqtt_client)
+            # Wait a moment for cleanup to complete
+            time.sleep(2)
+        
+        # Publish availability status immediately upon connection
+        mqtt_publisher.publish_availability("online")
         sensor_config.publish_configs(mqtt_client)
     else:
         logger.error(f"Failed to connect to MQTT broker with code: {rc}")
+
+def on_disconnect(client, userdata, rc):
+    """Callback for when the client disconnects from the MQTT broker"""
+    if rc != 0:
+        logger.warning(f"Unexpected disconnection from MQTT broker with code: {rc}")
+    else:
+        logger.info("Disconnected from MQTT broker")
 
 def create_tray_icon():
     # Create a simple icon (a white circle on black background)
@@ -153,9 +177,22 @@ def on_exit(icon):
     global server_running
     server_running = False
     logger.info("Shutting down application")
-    mqtt_publisher.publish_offline_status()
-    if mqtt_client.is_connected():
-        mqtt_client.disconnect()
+    
+    # Publish offline status before disconnecting
+    try:
+        mqtt_publisher.publish_offline_status()
+        # Give some time for the message to be sent
+        time.sleep(1)
+    except Exception as e:
+        logger.error(f"Error publishing offline status: {e}")
+    
+    # Disconnect from MQTT
+    try:
+        if mqtt_client.is_connected():
+            mqtt_client.disconnect()
+    except Exception as e:
+        logger.error(f"Error disconnecting from MQTT: {e}")
+    
     icon.stop()
     os._exit(0)
 
@@ -164,8 +201,15 @@ def mqtt_publish_loop():
     while server_running:
         try:
             if not mqtt_client.is_connected():
-                mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
-                mqtt_client.loop_start()
+                logger.info("Attempting to reconnect to MQTT broker...")
+                try:
+                    mqtt_client.reconnect()
+                    # Wait a moment for connection to establish
+                    time.sleep(2)
+                except Exception as e:
+                    logger.error(f"Failed to reconnect to MQTT broker: {e}")
+                    time.sleep(10)  # Wait longer before retrying
+                    continue
             
             # Collect metrics every second
             for _ in range(PUBLISH_INTERVAL):
@@ -175,7 +219,7 @@ def mqtt_publish_loop():
                 time.sleep(COLLECTION_INTERVAL)
             
             # Publish aggregated data every 30 seconds
-            if server_running:
+            if server_running and mqtt_client.is_connected():
                 data_collector.calculate_statistics()
                 unified_data = data_collector.get_unified_data()
                 mqtt_publisher.publish_system_info(
@@ -192,6 +236,7 @@ def main():
     
     # Set up MQTT client
     mqtt_client.on_connect = on_connect
+    mqtt_client.on_disconnect = on_disconnect
     try:
         mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
         mqtt_client.loop_start()

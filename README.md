@@ -8,6 +8,8 @@ A Python application that runs in the system tray and provides system informatio
 - Monitors system resources (CPU, memory, disk usage)
 - Automatic Home Assistant discovery via MQTT
 - Configurable through environment variables
+- **Automatic offline detection** - Home Assistant will show the device as offline when the computer is disconnected or the application is closed
+- **Robust connection handling** - Automatically reconnects to MQTT broker if connection is lost
 
 ## Installation
 
@@ -33,6 +35,9 @@ DEVICE_ID=optional-unique-id
 
 # Logging
 LOG_LEVEL=INFO
+
+# Sensor Cleanup (optional)
+CLEANUP_SENSORS_ON_START=true
 ```
 
 ### Configuration Options
@@ -44,6 +49,7 @@ LOG_LEVEL=INFO
 - `DEVICE_NAME`: Name of your computer (default: hostname)
 - `DEVICE_ID`: Unique identifier for the device (default: auto-generated UUID)
 - `LOG_LEVEL`: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- `CLEANUP_SENSORS_ON_START`: Automatically clean up old sensors on startup (default: true)
 
 ## Usage
 
@@ -79,8 +85,9 @@ No manual configuration is needed in Home Assistant. The device and sensors will
 ### Sensor Details
 
 #### Status Sensor
-- Shows "online" when the application is running
-- Shows "offline" when the application is closed
+- Shows "online" when the application is running and connected to MQTT
+- Shows "offline" when the application is closed or disconnected from MQTT
+- Automatically detects network disconnections and computer shutdowns
 - Updates every 30 seconds
 
 #### System Info Sensor
@@ -93,6 +100,56 @@ No manual configuration is needed in Home Assistant. The device and sensors will
 ## Exiting the Application
 
 Right-click the system tray icon and select "Exit" to close the application.
+
+## Testing Availability
+
+To test that the offline detection works correctly:
+
+1. Start the application and verify it shows as "online" in Home Assistant
+2. Close the application using the system tray "Exit" option
+3. Check Home Assistant - the device should show as "offline" within a few seconds
+
+You can also test network disconnection scenarios:
+1. Start the application
+2. Disconnect your computer from the network (disable WiFi/Ethernet)
+3. Check Home Assistant - the device should show as "offline" after the MQTT connection timeout
+4. Reconnect to the network
+5. The application should automatically reconnect and show as "online" again
+
+For advanced testing, you can use the included test script:
+```bash
+python test_availability.py
+```
+
+This script will connect to MQTT, publish online status, wait 10 seconds, then publish offline status and disconnect. This simulates the behavior of the main application.
+
+## Sensor Cleanup
+
+The application now automatically cleans up old sensors when it starts up. This prevents orphaned sensors from accumulating in Home Assistant when sensors are removed or changed.
+
+### Automatic Cleanup
+
+By default, the application will clean up old sensors on startup. You can disable this by setting:
+```env
+CLEANUP_SENSORS_ON_START=false
+```
+
+### Manual Cleanup
+
+If you need to manually clean up sensors, you can use the standalone cleanup script:
+```bash
+python cleanup_sensors.py
+```
+
+This script will remove all sensors for your device from Home Assistant. You may need to restart Home Assistant or wait a few minutes for the changes to take effect.
+
+### What Gets Cleaned Up
+
+The cleanup process removes:
+- Old sensor configurations
+- Retained state messages
+- Orphaned disk sensors
+- Statistics sensors that are no longer used
 
 ## Downloading the Executable
 

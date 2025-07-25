@@ -17,6 +17,11 @@ class MQTTPublisher:
             "memory": "Memory (RAM) Usage"
         }
 
+    def publish_availability(self, status):
+        """Publish availability status"""
+        if self.mqtt_client.is_connected():
+            self.mqtt_client.publish(f"{self.binary_base_topic}/availability", status, retain=True)
+
     def publish_system_info(self, system_info, statistics):
         """Publish system information to MQTT"""
         if not self.mqtt_client.is_connected():
@@ -108,4 +113,5 @@ class MQTTPublisher:
     def publish_offline_status(self):
         """Publish offline status when shutting down"""
         if self.mqtt_client.is_connected():
+            self.mqtt_client.publish(f"{self.binary_base_topic}/availability", "offline", retain=True)
             self.mqtt_client.publish(f"{self.binary_base_topic}/status", "offline", retain=True) 
